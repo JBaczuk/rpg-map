@@ -1,11 +1,10 @@
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View, Image } from 'react-native';
+import Main from './src/Main';
 
-export default function App() {
+export default function App () {
   return (
-    <View style={styles.container}>
-      <Text>Open up App.tsx to start working on your app!</Text>
-    </View>
+    <Main mapUrl='https://i1.wp.com/www.fantasticmaps.com/wp-content/uploads/2015/12/8.jpg' />
   );
 }
 
