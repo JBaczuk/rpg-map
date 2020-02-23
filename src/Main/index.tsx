@@ -72,6 +72,23 @@ const pickMap = async () => {
   return ''
 };
 
+const STATUS_BAR_HEIGHT = Platform.OS === 'ios' ? 50 : StatusBar.currentHeight;
+
+function StatusBarPlaceHolder() {
+    return (
+        <View style={{
+            width: "100%",
+            height: STATUS_BAR_HEIGHT,
+            backgroundColor: "black",
+						zIndex: 20
+        }}>
+            <StatusBar
+                barStyle="light-content"
+            />
+        </View>
+    );
+}
+
 class Main extends React.Component {
   constructor(props) {
     super(props)
@@ -141,25 +158,33 @@ class Main extends React.Component {
 				zIndex: -1
 			},
 			main: {
-				padding: StyleGuide.spacing
+				padding: StyleGuide.spacing,
+				backgroundColor: 'black'
 			},
 			player: {
+				flex: 0,
+				marginRight: -this.state.gridScale,
 				height: this.state.gridScale,
 				width: this.state.gridScale,
-				alignItems: 'center',
-				borderRadius: 4
+				borderRadius: 4,
 			},
 			header: {
 				flexDirection: 'row',
 				alignItems: 'space-around',
-				justifyContent: 'center'
+				justifyContent: 'center',
+				zIndex: 1,
+				backgroundColor: 'black'
 			},
 			tokenDock: {
+				flex: -1,
 				flexDirection: 'row',
-				alignItems: 'space-around',
-				justifyContent: 'center'
+				alignItems: 'center',
+				justifyContent: 'center',
 			},
 			footer: {
+			},
+			headerText: {
+					color: 'white'
 			}
 		}
     const players = this.state.players.map(player => {
@@ -175,90 +200,99 @@ class Main extends React.Component {
     })
 
     return (
-      <SafeAreaView style={{ flex: 1, paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 0 }}>
-        <View style={styles.header}>
-          <Button
-            onPress={async () => {
-              await getPermissionAsync()
-              const image = await pickMap()
-              if (image !== '') {
-                this.state.mapImage = image
-                await AsyncStorage.setItem('mapImage', JSON.stringify(image))
-              }
-              await this.fetchData()
-            }}
-          >
-            <Text>Change Map</Text>
-          </Button>
-          <Button
-            onPress={async () => {
-              await getPermissionAsync()
-              const image = await pickToken()
-              if (image !== '') {
-                const players = [...this.state.players]
-                players.push({
-                  name: 'Test Player' + players.length,
-                  image,
-                  x: 100,
-                  y: 50,
-                  color: 'blue'
-                })
-                await AsyncStorage.setItem('players', JSON.stringify(players))
-              }
-              await this.fetchData()
-            }}
-          >
-            <Text>Add Token</Text>
-          </Button>
-          <Button
-            onPress={async () => {
-              const confirmed = await this.confirmDeleteAllPlayers()
-              if (confirmed) {
-                await AsyncStorage.removeItem('players')
-                this.fetchData()
-              }
-            }}
-          >
-            <Text>Delete All Tokens</Text>
-          </Button>
-        </View>
-        <View style={styles.header}>
-					<Slider
-						value={this.state.gridScale}
-						onValueChange={(value) => {
-							const newState = this.state
-							newState.gridScale = value
-							this.setState(newState)
-						}}
-					  style={{width: 200, height: 40}}
-					  minimumValue={5}
-					  maximumValue={50}
-					  minimumTrackTintColor="#78c5ef"
-					  maximumTrackTintColor="#000000"
-					/>
-        </View>
-        <View style={styles.header}>
-					<Text>Value: {this.state.gridScale.toFixed(0)}</Text>
-        </View>
+			<View style={{flex: 1}}>
+				<StatusBarPlaceHolder/>
 
-        <ReactNativeZoomableView
-          maxZoom={2}
-          minZoom={1}
-          zoomStep={0.5}
-          initialZoom={1}
-          bindToBorders={true}
-          // onZoomAfter={this.logOutZoomState}
-          style={styles.main}
-        >
-          <View style={styles.tokenDock}>
-            {players}
-          </View>
-          <Image style={styles.image}
-            source={{ uri: this.state.mapImage }}
-            resizeMode="contain" />
-        </ReactNativeZoomableView>
-        <View style={styles.footer} />
-      </SafeAreaView>
+				<SafeAreaView style={{ flex: 1, paddingTop: STATUS_BAR_HEIGHT}}>
+					<View style={styles.header}>
+						<Button
+							onPress={async () => {
+								await getPermissionAsync()
+								const image = await pickMap()
+								if (image !== '') {
+									this.state.mapImage = image
+									await AsyncStorage.setItem('mapImage', JSON.stringify(image))
+								}
+								await this.fetchData()
+							}}
+						>
+							<Text>Change Map</Text>
+						</Button>
+						<Button
+							onPress={async () => {
+								await getPermissionAsync()
+								const image = await pickToken()
+								if (image !== '') {
+									const players = [...this.state.players]
+									players.push({
+										name: 'Test Player' + players.length,
+										image,
+										x: 100,
+										y: 50,
+										color: 'blue'
+									})
+									await AsyncStorage.setItem('players', JSON.stringify(players))
+								}
+								await this.fetchData()
+							}}
+						>
+							<Text>Add Token</Text>
+						</Button>
+						<Button
+							onPress={async () => {
+								const confirmed = await this.confirmDeleteAllPlayers()
+								if (confirmed) {
+									await AsyncStorage.removeItem('players')
+									this.fetchData()
+								}
+							}}
+						>
+							<Text>Delete All Tokens</Text>
+						</Button>
+					</View>
+					<View style={styles.header}>
+						<Slider
+							value={this.state.gridScale}
+							onValueChange={(value) => {
+								const newState = this.state
+								newState.gridScale = value
+								this.setState(newState)
+							}}
+							style={{width: 200, height: 40}}
+							minimumValue={5}
+							maximumValue={50}
+							minimumTrackTintColor="#78c5ef"
+							maximumTrackTintColor="#FFFFFF"
+							thumbTintColor='#3170f5'
+						/>
+					</View>
+					<View style={styles.header}>
+						<Text style={styles.headerText}>
+						Value: {this.state.gridScale.toFixed(0)}
+						</Text>
+					</View>
+
+					<ReactNativeZoomableView
+						maxZoom={2}
+						minZoom={1}
+						zoomStep={0.5}
+						initialZoom={1}
+						bindToBorders={true}
+						// onZoomAfter={this.logOutZoomState}
+						style={styles.main}
+					>
+						<View style={styles.tokenDock}>
+							{players}
+						</View>
+						<Image style={styles.image}
+							source={{ uri: this.state.mapImage }}
+							resizeMode="contain" />
+					</ReactNativeZoomableView>
+					<View style={styles.footer} />
+				</SafeAreaView>
+
+				
+			</View>
     )
   }
 }
