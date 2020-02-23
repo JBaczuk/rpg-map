@@ -2,9 +2,9 @@
   "devToolsPort": 19002,
   "expoServerPort": 19000,
   "packagerPort": 19001,
-  "packagerPid": 18807,
-  "expoServerNgrokUrl": null,
-  "packagerNgrokUrl": null,
-  "ngrokPid": null,
+  "packagerPid": 23240,
+  "expoServerNgrokUrl": "https://ba-tht.jbaczuk.rpg-map.exp.direct",
+  "packagerNgrokUrl": "https://packager.ba-tht.jbaczuk.rpg-map.exp.direct",
+  "ngrokPid": 23263,
   "webpackServerPort": null
 }

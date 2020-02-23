@@ -1,6 +1,17 @@
 import React from 'react'
-import { View, Image, StyleSheet } from 'react-native'
+import {
+  View, Image, StyleSheet,
+  Text, SafeAreaView, AsyncStorage,
+  Alert
+} from 'react-native'
 import ReactNativeZoomableView from '@dudigital/react-native-zoomable-view/src/ReactNativeZoomableView'
+import Draggable from '../Draggable'
+import Button from '../Button'
+import StyleGuide from '../StyleGuide'
+import * as ImagePicker from 'expo-image-picker'
+import Constants from 'expo-constants'
+import * as Permissions from 'expo-permissions'
+
 
 const dummyPlayers = [{
   name: 'Kylona',
@@ -15,43 +26,148 @@ const dummyPlayers = [{
   y: 500,
   color: 'blue'
 }]
-function Main (props) {
-  const { mapUrl } = props
 
-  const players = dummyPlayers.map(player => {
-    const imageStyle = {
-      position: 'absolute',
-      top: player.y,
-      bottom: 0,
-      left: player.x,
-      right: 0,
-      backgroundColor: player.color
+const getPermissionAsync = async () => {
+  if (Constants.platform.ios) {
+    const { status } = await Permissions.askAsync(Permissions.CAMERA_ROLL);
+    if (status !== 'granted') {
+      alert('Sorry, we need camera roll permissions to make this work!');
     }
-    return (
-      <View style={[imageStyle, styles.player]}>
-        <Image key={player.name} source={{ uri: player.image }} style={[styles.playerImage]} />
-      </View>
-    )
-  })
+  }
+}
 
-  return (
-    <View style={{ flex: 1 }}>
-      <ReactNativeZoomableView
-        maxZoom={2}
-        minZoom={1}
-        zoomStep={0.5}
-        initialZoom={1}
-        bindToBorders={true}
-        // onZoomAfter={this.logOutZoomState}
-        style={styles.main}
-      >
-        {players}
-        <Image style={styles.image}
-          source={{ uri: mapUrl }}
-          resizeMode="contain" />
-      </ReactNativeZoomableView>
-    </View>
-  )
+const pickImage = async () => {
+  let result = await ImagePicker.launchImageLibraryAsync({
+    mediaTypes: ImagePicker.MediaTypeOptions.All,
+    allowsEditing: true,
+    aspect: [4, 3],
+    quality: 1
+  });
+
+  console.log(result);
+
+  if (!result.cancelled) {
+    return result.uri
+  }
+
+  return ''
+};
+
+class Main extends React.Component {
+  constructor(props) {
+    super(props)
+
+    this.state = {
+      players: []
+    }
+  }
+
+  componentDidMount () {
+    this.fetchData()
+  }
+
+  fetchData () {
+    AsyncStorage.getItem('players')
+      .then(playersString => {
+        const players = JSON.parse(playersString)
+        if (players) {
+          this.setState({
+            players
+          })
+        }
+      })
+  }
+
+
+  confirmDeleteAllPlayers = async () => {
+    return new Promise((resolve) => {
+      const title = 'Are you sure you want to delete all players?'
+      const message = 'This will clear all tokens from the map.'
+      const buttons = [
+        {
+          text: 'Cancel',
+          onPress: () => resolve(false)
+        },
+        {
+          text: 'Delete',
+          onPress: () => resolve(true)
+        }]
+      Alert.alert(title, message, buttons, { cancelable: false })
+    })
+  }
+
+  render () {
+    const { mapUrl } = this.props
+
+    const players = this.state.players.map(player => {
+      const imageStyle = {
+        position: 'absolute',
+        top: player.y,
+        bottom: 0,
+        left: player.x,
+        right: 0,
+        backgroundColor: player.color
+      }
+      return (
+        <Draggable key={player.name}>
+          <Image source={{ uri: player.image }} style={[imageStyle, styles.playerImage, styles.player]} />
+        </Draggable>
+      )
+    })
+
+    return (
+      <SafeAreaView style={{ flex: 1 }}>
+        <View style={styles.header}>
+          <Button
+            onPress={async () => {
+              await getPermissionAsync()
+              const image = await pickImage()
+              if (image !== '') {
+                const players = [...this.state.players]
+                players.push({
+                  name: 'Test Player',
+                  image,
+                  x: 200,
+                  y: 500,
+                  color: 'blue'
+                })
+                await AsyncStorage.setItem('players', JSON.stringify(players))
+              }
+              await this.fetchData()
+            }}
+          >
+            <Text>Add Icon</Text>
+          </Button>
+          <Button
+            onPress={async () => {
+              const confirmed = await this.confirmDeleteAllPlayers()
+              if (confirmed) {
+                await AsyncStorage.removeItem('players')
+                this.fetchData()
+              }
+            }}
+          >
+            <Text>Delete All</Text>
+          </Button>
+        </View>
+        <ReactNativeZoomableView
+          maxZoom={2}
+          minZoom={1}
+          zoomStep={0.5}
+          initialZoom={1}
+          bindToBorders={true}
+          // onZoomAfter={this.logOutZoomState}
+          style={styles.main}
+        >
+          {players}
+          <Image style={styles.image}
+            source={{ uri: mapUrl }}
+            resizeMode="contain" />
+        </ReactNativeZoomableView>
+        <View style={styles.footer} />
+      </SafeAreaView>
+    )
+  }
 }
 
 const styles = {
@@ -62,18 +178,24 @@ const styles = {
     zIndex: -1
   },
   playerImage: {
-    height: 20,
-    aspectRatio: 0.5
+    height: 24,
+    aspectRatio: 1
   },
   main: {
+    padding: StyleGuide.spacing
   },
   player: {
     height: 25,
     width: 25,
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: 'gray',
     borderRadius: 4
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'space-around',
+    justifyContent: 'center'
+  },
+  footer: {
   }
 }
 

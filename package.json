@@ -12,9 +12,13 @@
   "dependencies": {
     "@dudigital/react-native-zoomable-view": "^1.0.15",
     "expo": "~36.0.0",
+    "expo-image-picker": "~8.0.1",
     "react": "~16.9.0",
     "react-dom": "~16.9.0",
     "react-native": "https://github.com/expo/react-native/archive/sdk-36.0.0.tar.gz",
+    "react-native-gesture-handler": "^1.6.0",
+    "react-native-reanimated": "^1.7.0",
+    "react-native-redash": "^9.6.0",
     "react-native-screens": "2.0.0-alpha.12",
     "react-native-web": "~0.11.7"
   },
