@@ -20,10 +20,10 @@ function Button (props) {
     <TouchableWithoutFeedback
       onPressIn={() => {
         setPressed(1)
-        props.onPress()
       }}
       onPressOut={() => {
         setPressed(0)
+        props.onPress()
       }}
     >
       <Animated.View style={[styles.button, { transform: [{ scale }] }]}>
