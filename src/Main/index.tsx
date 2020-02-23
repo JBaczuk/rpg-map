@@ -2,7 +2,7 @@ import React from 'react'
 import {
   View, Image, StyleSheet,
   Text, SafeAreaView, AsyncStorage,
-  Alert
+  Alert, StatusBar, Platform
 } from 'react-native'
 import ReactNativeZoomableView from '@dudigital/react-native-zoomable-view/src/ReactNativeZoomableView'
 import Draggable from '../Draggable'
@@ -88,9 +88,11 @@ class Main extends React.Component {
       .then(playersString => {
         const players = JSON.parse(playersString)
         if (players) {
-          const newState=this.state
-          newState.players=players
+          const newState = this.state
+          newState.players = players
           this.setState(newState)
+        } else {
+          this.setState({ players: [] })
         }
       })
 
@@ -98,8 +100,8 @@ class Main extends React.Component {
       .then(mapImageString => {
         const mapImage = JSON.parse(mapImageString)
         if (mapImage) {
-          const newState=this.state
-          newState.mapImage=mapImage
+          const newState = this.state
+          newState.mapImage = mapImage
           this.setState(newState)
         }
       })
@@ -129,29 +131,25 @@ class Main extends React.Component {
 
     const players = this.state.players.map(player => {
       const imageStyle = {
-        position: 'absolute',
-        top: player.y,
-        bottom: 0,
-        left: player.x,
-        right: 0,
         backgroundColor: player.color
       }
       return (
         <Draggable key={player.name}>
-          <Image source={{ uri: player.image }} style={[imageStyle, styles.playerImage, styles.player]} />
+          <Image source={{ uri: player.image }} style={[styles.player]}
+          />
         </Draggable>
       )
     })
 
     return (
-      <SafeAreaView style={{ flex: 1 }}>
+      <SafeAreaView style={{ flex: 1, paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 0 }}>
         <View style={styles.header}>
           <Button
             onPress={async () => {
               await getPermissionAsync()
               const image = await pickMap()
               if (image !== '') {
-                this.state.mapImage=image
+                this.state.mapImage = image
                 await AsyncStorage.setItem('mapImage', JSON.stringify(image))
               }
               await this.fetchData()
@@ -168,8 +166,8 @@ class Main extends React.Component {
                 players.push({
                   name: 'Test Player' + players.length,
                   image,
-                  x: 200,
-                  y: 500,
+                  x: 100,
+                  y: 50,
                   color: 'blue'
                 })
                 await AsyncStorage.setItem('players', JSON.stringify(players))
@@ -191,6 +189,7 @@ class Main extends React.Component {
             <Text>Delete All Tokens</Text>
           </Button>
         </View>
+
         <ReactNativeZoomableView
           maxZoom={2}
           minZoom={1}
@@ -200,7 +199,9 @@ class Main extends React.Component {
           // onZoomAfter={this.logOutZoomState}
           style={styles.main}
         >
-          {players}
+          <View style={styles.tokenDock}>
+            {players}
+          </View>
           <Image style={styles.image}
             source={{ uri: this.state.mapImage }}
             resizeMode="contain" />
@@ -218,10 +219,6 @@ const styles = {
     height: null,
     zIndex: -1
   },
-  playerImage: {
-    height: 24,
-    aspectRatio: 1
-  },
   main: {
     padding: StyleGuide.spacing
   },
@@ -232,6 +229,11 @@ const styles = {
     borderRadius: 4
   },
   header: {
+    flexDirection: 'row',
+    alignItems: 'space-around',
+    justifyContent: 'center'
+  },
+  tokenDock: {
     flexDirection: 'row',
     alignItems: 'space-around',
     justifyContent: 'center'
