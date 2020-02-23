@@ -36,11 +36,27 @@ const getPermissionAsync = async () => {
   }
 }
 
-const pickImage = async () => {
+const pickToken = async () => {
   let result = await ImagePicker.launchImageLibraryAsync({
     mediaTypes: ImagePicker.MediaTypeOptions.All,
     allowsEditing: true,
-    aspect: [4, 3],
+    aspect: [1, 1],
+    quality: 1
+  });
+
+  console.log(result);
+
+  if (!result.cancelled) {
+    return result.uri
+  }
+
+  return ''
+};
+
+const pickMap = async () => {
+  let result = await ImagePicker.launchImageLibraryAsync({
+    mediaTypes: ImagePicker.MediaTypeOptions.All,
+    allowsEditing: false,
     quality: 1
   });
 
@@ -58,7 +74,8 @@ class Main extends React.Component {
     super(props)
 
     this.state = {
-      players: []
+      players: [],
+      mapImage: props.mapUrl
     }
   }
 
@@ -71,9 +88,19 @@ class Main extends React.Component {
       .then(playersString => {
         const players = JSON.parse(playersString)
         if (players) {
-          this.setState({
-            players
-          })
+          const newState=this.state
+          newState.players=players
+          this.setState(newState)
+        }
+      })
+
+    AsyncStorage.getItem('mapImage')
+      .then(mapImageString => {
+        const mapImage = JSON.parse(mapImageString)
+        if (mapImage) {
+          const newState=this.state
+          newState.mapImage=mapImage
+          this.setState(newState)
         }
       })
   }
@@ -81,7 +108,7 @@ class Main extends React.Component {
 
   confirmDeleteAllPlayers = async () => {
     return new Promise((resolve) => {
-      const title = 'Are you sure you want to delete all players?'
+      const title = 'Are you sure you want to delete all tokens?'
       const message = 'This will clear all tokens from the map.'
       const buttons = [
         {
@@ -90,14 +117,15 @@ class Main extends React.Component {
         },
         {
           text: 'Delete',
-          onPress: () => resolve(true)
+          onPress: () => {
+            resolve(true)
+          }
         }]
       Alert.alert(title, message, buttons, { cancelable: false })
     })
   }
 
   render () {
-    const { mapUrl } = this.props
 
     const players = this.state.players.map(player => {
       const imageStyle = {
@@ -121,11 +149,24 @@ class Main extends React.Component {
           <Button
             onPress={async () => {
               await getPermissionAsync()
-              const image = await pickImage()
+              const image = await pickMap()
+              if (image !== '') {
+                this.state.mapImage=image
+                await AsyncStorage.setItem('mapImage', JSON.stringify(image))
+              }
+              await this.fetchData()
+            }}
+          >
+            <Text>Change Map</Text>
+          </Button>
+          <Button
+            onPress={async () => {
+              await getPermissionAsync()
+              const image = await pickToken()
               if (image !== '') {
                 const players = [...this.state.players]
                 players.push({
-                  name: 'Test Player',
+                  name: 'Test Player' + players.length,
                   image,
                   x: 200,
                   y: 500,
@@ -136,7 +177,7 @@ class Main extends React.Component {
               await this.fetchData()
             }}
           >
-            <Text>Add Icon</Text>
+            <Text>Add Token</Text>
           </Button>
           <Button
             onPress={async () => {
@@ -147,7 +188,7 @@ class Main extends React.Component {
               }
             }}
           >
-            <Text>Delete All</Text>
+            <Text>Delete All Tokens</Text>
           </Button>
         </View>
         <ReactNativeZoomableView
@@ -161,7 +202,7 @@ class Main extends React.Component {
         >
           {players}
           <Image style={styles.image}
-            source={{ uri: mapUrl }}
+            source={{ uri: this.state.mapImage }}
             resizeMode="contain" />
         </ReactNativeZoomableView>
         <View style={styles.footer} />

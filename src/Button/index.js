@@ -40,7 +40,7 @@ const styles = {
     borderWidth: 1,
     borderColor: 'black',
     borderRadius: StyleGuide.spacing / 2,
-    backgroundColor: 'gray'
+    backgroundColor: 'cyan'
   },
   buttonText: {
     fontSize: StyleGuide.fontSize,

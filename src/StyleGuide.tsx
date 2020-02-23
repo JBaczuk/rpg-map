@@ -1,4 +1,4 @@
 export default {
   spacing: 8,
-  fontSize: 16
+  fontSize: 24
 }
