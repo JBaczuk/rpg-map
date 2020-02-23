@@ -11,6 +11,9 @@ import StyleGuide from '../StyleGuide'
 import * as ImagePicker from 'expo-image-picker'
 import Constants from 'expo-constants'
 import * as Permissions from 'expo-permissions'
+import Slider from "react-native-slider";
+
+
 
 
 const dummyPlayers = [{
@@ -75,7 +78,8 @@ class Main extends React.Component {
 
     this.state = {
       players: [],
-      mapImage: props.mapUrl
+      mapImage: props.mapUrl,
+			gridScale: 25
     }
   }
 
@@ -129,6 +133,35 @@ class Main extends React.Component {
 
   render () {
 
+		const styles = {
+			image: {
+				flex: 1,
+				width: '100%',
+				height: null,
+				zIndex: -1
+			},
+			main: {
+				padding: StyleGuide.spacing
+			},
+			player: {
+				height: this.state.gridScale,
+				width: this.state.gridScale,
+				alignItems: 'center',
+				borderRadius: 4
+			},
+			header: {
+				flexDirection: 'row',
+				alignItems: 'space-around',
+				justifyContent: 'center'
+			},
+			tokenDock: {
+				flexDirection: 'row',
+				alignItems: 'space-around',
+				justifyContent: 'center'
+			},
+			footer: {
+			}
+		}
     const players = this.state.players.map(player => {
       const imageStyle = {
         backgroundColor: player.color
@@ -189,6 +222,24 @@ class Main extends React.Component {
             <Text>Delete All Tokens</Text>
           </Button>
         </View>
+        <View style={styles.header}>
+					<Slider
+						value={this.state.gridScale}
+						onValueChange={(value) => {
+							const newState = this.state
+							newState.gridScale = value
+							this.setState(newState)
+						}}
+					  style={{width: 200, height: 40}}
+					  minimumValue={5}
+					  maximumValue={50}
+					  minimumTrackTintColor="#78c5ef"
+					  maximumTrackTintColor="#000000"
+					/>
+        </View>
+        <View style={styles.header}>
+					<Text>Value: {this.state.gridScale.toFixed(0)}</Text>
+        </View>
 
         <ReactNativeZoomableView
           maxZoom={2}
@@ -212,34 +263,5 @@ class Main extends React.Component {
   }
 }
 
-const styles = {
-  image: {
-    flex: 1,
-    width: '100%',
-    height: null,
-    zIndex: -1
-  },
-  main: {
-    padding: StyleGuide.spacing
-  },
-  player: {
-    height: 25,
-    width: 25,
-    alignItems: 'center',
-    borderRadius: 4
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'space-around',
-    justifyContent: 'center'
-  },
-  tokenDock: {
-    flexDirection: 'row',
-    alignItems: 'space-around',
-    justifyContent: 'center'
-  },
-  footer: {
-  }
-}
 
 export default Main
