@@ -58,3 +58,6 @@ buck-out/
 # Other
 .DS_Store
 .vscode/
+.expo/packager-info.json
+.expo/settings.json
+package-lock.json
