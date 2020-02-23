@@ -163,10 +163,15 @@ class Main extends React.Component {
 			},
 			player: {
 				flex: 0,
-				marginRight: -this.state.gridScale,
+				marginLeft:	-this.state.gridScale/2,
+				marginRight: -this.state.gridScale/2,
+				marginTop:  -this.state.gridScale/2,
+				marginBottom: 0.001 + -this.state.gridScale/2,  //needed offset to prvent oclusion
 				height: this.state.gridScale,
 				width: this.state.gridScale,
-				borderRadius: 4,
+				borderRadius: this.state.gridScale/5,
+				borderWidth: this.state.gridScale/25,
+				borderColor: 'black'
 			},
 			header: {
 				flexDirection: 'row',
