@@ -18,11 +18,13 @@
     "react": "~16.9.0",
     "react-dom": "~16.9.0",
     "react-native": "https://github.com/expo/react-native/archive/sdk-36.0.0.tar.gz",
+    "react-native-draggable": "^3.0.0",
     "react-native-gesture-handler": "^1.6.0",
     "react-native-reanimated": "^1.7.0",
     "react-native-redash": "^9.6.0",
     "react-native-screens": "2.0.0-alpha.12",
     "react-native-slider": "^0.11.0",
+    "react-native-super-grid": "^3.1.2",
     "react-native-web": "~0.11.7"
   },
   "devDependencies": {

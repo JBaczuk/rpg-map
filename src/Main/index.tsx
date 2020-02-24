@@ -14,22 +14,6 @@ import * as Permissions from 'expo-permissions'
 import Slider from "react-native-slider";
 
 
-
-
-const dummyPlayers = [{
-  name: 'Kylona',
-  image: 'https://i.pinimg.com/originals/c7/fe/25/c7fe251cd11a2ecb590d7d9efa596a49.png',
-  x: 150,
-  y: 450,
-  color: 'red'
-}, {
-  name: 'JBaczuk',
-  image: 'https://i.pinimg.com/originals/81/11/10/81111081508e4e7bd138890ab2cdf9dd.png',
-  x: 200,
-  y: 500,
-  color: 'blue'
-}]
-
 const getPermissionAsync = async () => {
   if (Constants.platform.ios) {
     const { status } = await Permissions.askAsync(Permissions.CAMERA_ROLL);
@@ -89,6 +73,10 @@ function StatusBarPlaceHolder() {
     );
 }
 
+function Token() {
+
+}
+
 class Main extends React.Component {
   constructor(props) {
     super(props)
@@ -131,7 +119,7 @@ class Main extends React.Component {
 
   confirmDeleteAllPlayers = async () => {
     return new Promise((resolve) => {
-      const title = 'Are you sure you want to delete all tokens?'
+      const title = 'Are you sure you want to clear the map?'
       const message = 'This will clear all tokens from the map.'
       const buttons = [
         {
@@ -189,13 +177,14 @@ class Main extends React.Component {
 			footer: {
 			},
 			headerText: {
-					color: 'white'
+				color: 'white',
+				margin: 10
+			},
+			gridStyle: {
+				position: 'absolute'
 			}
 		}
     const players = this.state.players.map(player => {
-      const imageStyle = {
-        backgroundColor: player.color
-      }
       return (
         <Draggable key={player.name}>
           <Image source={{ uri: player.image }} style={[styles.player]}
@@ -234,7 +223,8 @@ class Main extends React.Component {
 										image,
 										x: 100,
 										y: 50,
-										color: 'blue'
+										color: 'blue',
+										onDock: 'true'
 									})
 									await AsyncStorage.setItem('players', JSON.stringify(players))
 								}
@@ -252,7 +242,7 @@ class Main extends React.Component {
 								}
 							}}
 						>
-							<Text>Delete All Tokens</Text>
+							<Text>Clear Map</Text>
 						</Button>
 					</View>
 					<View style={styles.header}>
@@ -271,12 +261,6 @@ class Main extends React.Component {
 							thumbTintColor='#3170f5'
 						/>
 					</View>
-					<View style={styles.header}>
-						<Text style={styles.headerText}>
-						Value: {this.state.gridScale.toFixed(0)}
-						</Text>
-					</View>
-
 					<ReactNativeZoomableView
 						maxZoom={2}
 						minZoom={1}

@@ -39,8 +39,8 @@ const styles = {
     margin: StyleGuide.spacing,
     borderWidth: 1,
     borderColor: 'black',
-    borderRadius: StyleGuide.spacing / 2,
-    backgroundColor: 'cyan'
+    borderRadius: StyleGuide.spacing * 2,
+    backgroundColor: '#78c5ef'
   },
   buttonText: {
     fontSize: StyleGuide.fontSize,

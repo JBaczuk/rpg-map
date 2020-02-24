@@ -1,10 +1,10 @@
 {
   "devToolsPort": 19002,
   "expoServerPort": 19000,
-  "packagerPort": 19003,
-  "packagerPid": 7953,
+  "packagerPort": 19004,
+  "packagerPid": 10813,
   "expoServerNgrokUrl": "https://ba-tht.kylona.rpg-map.exp.direct",
   "packagerNgrokUrl": "https://packager.ba-tht.kylona.rpg-map.exp.direct",
-  "ngrokPid": 7967,
+  "ngrokPid": 10826,
   "webpackServerPort": null
 }
