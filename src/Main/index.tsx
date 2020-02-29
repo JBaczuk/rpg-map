@@ -12,6 +12,8 @@ import * as ImagePicker from 'expo-image-picker'
 import Constants from 'expo-constants'
 import * as Permissions from 'expo-permissions'
 import Slider from "react-native-slider";
+import Token from '../Token'
+
 
 
 const getPermissionAsync = async () => {
@@ -73,8 +75,8 @@ function StatusBarPlaceHolder() {
     );
 }
 
-function Token() {
-
+function onMoveDefault() {
+  console.log("On Move called.")
 }
 
 class Main extends React.Component {
@@ -82,7 +84,7 @@ class Main extends React.Component {
     super(props)
 
     this.state = {
-      players: [],
+      characters: [],
       mapImage: props.mapUrl,
 			gridScale: 25
     }
@@ -93,15 +95,15 @@ class Main extends React.Component {
   }
 
   fetchData () {
-    AsyncStorage.getItem('players')
-      .then(playersString => {
-        const players = JSON.parse(playersString)
-        if (players) {
+    AsyncStorage.getItem('characters')
+      .then(charactersString => {
+        const characters = JSON.parse(charactersString)
+        if (characters) {
           const newState = this.state
-          newState.players = players
+          newState.characters = characters
           this.setState(newState)
         } else {
-          this.setState({ players: [] })
+          this.setState({ characters: [] })
         }
       })
 
@@ -115,6 +117,21 @@ class Main extends React.Component {
         }
       })
   }
+
+	sendData() {
+
+    AsyncStorage.getItem('characters')
+      .then(charactersString => {
+				fetch('https://kylona.com/cgi-bin/updateMap.pl', {
+					method: 'POST',
+					headers: {
+						Accept: 'application/json',
+						'Content-Type': 'application/json',
+					},
+					body: charactersString
+				});
+      })
+	}
 
 
   confirmDeleteAllPlayers = async () => {
@@ -149,7 +166,7 @@ class Main extends React.Component {
 				padding: StyleGuide.spacing,
 				backgroundColor: 'black'
 			},
-			player: {
+			character: {
 				flex: 0,
 				marginLeft:	-this.state.gridScale/2,
 				marginRight: -this.state.gridScale/2,
@@ -184,12 +201,16 @@ class Main extends React.Component {
 				position: 'absolute'
 			}
 		}
-    const players = this.state.players.map(player => {
+    const characters = this.state.characters.map(character => {
       return (
-        <Draggable key={player.name}>
-          <Image source={{ uri: player.image }} style={[styles.player]}
-          />
-        </Draggable>
+        <Token
+					key={character.name}
+					xPos={character.x}
+					yPos={character.y}
+          onMove={onMoveDefault}
+					>
+          <Image source={{ uri: character.image }} style={[styles.character]}/>
+        </Token>
       )
     })
 
@@ -199,6 +220,12 @@ class Main extends React.Component {
 
 				<SafeAreaView style={{ flex: 1, paddingTop: STATUS_BAR_HEIGHT}}>
 					<View style={styles.header}>
+						<Button
+							onPress={async () => {
+								await this.sendData()
+							}}>
+							<Text>Push Map</Text>
+						</Button>
 						<Button
 							onPress={async () => {
 								await getPermissionAsync()
@@ -217,16 +244,16 @@ class Main extends React.Component {
 								await getPermissionAsync()
 								const image = await pickToken()
 								if (image !== '') {
-									const players = [...this.state.players]
-									players.push({
-										name: 'Test Player' + players.length,
+									const characters = [...this.state.characters]
+									characters.push({
+										name: 'Test Player' + characters.length,
 										image,
 										x: 100,
-										y: 50,
+										y: 200,
 										color: 'blue',
 										onDock: 'true'
 									})
-									await AsyncStorage.setItem('players', JSON.stringify(players))
+									await AsyncStorage.setItem('characters', JSON.stringify(characters))
 								}
 								await this.fetchData()
 							}}
@@ -237,7 +264,7 @@ class Main extends React.Component {
 							onPress={async () => {
 								const confirmed = await this.confirmDeleteAllPlayers()
 								if (confirmed) {
-									await AsyncStorage.removeItem('players')
+									await AsyncStorage.removeItem('characters')
 									this.fetchData()
 								}
 							}}
@@ -271,7 +298,7 @@ class Main extends React.Component {
 						style={styles.main}
 					>
 						<View style={styles.tokenDock}>
-							{players}
+							{characters}
 						</View>
 						<Image style={styles.image}
 							source={{ uri: this.state.mapImage }}

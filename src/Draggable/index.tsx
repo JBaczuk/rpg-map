@@ -120,7 +120,7 @@ const withSpring = (value, gestureState, offset, velocity, snap) => {
 function Draggable (props) {
   const {
     animatedViewWidth, animatedViewHeight,
-    containerWidth, containerHeight
+    containerWidth, containerHeight, startX, startY,
   } = props
 
   const [state,
@@ -133,6 +133,7 @@ function Draggable (props) {
     snapX,
     snapY
   ] = useValues([State.UNDETERMINED, 0, 0, 0, 0, 0, 0, 0, 0], [])
+  state.position = {startX, startY}
 
   const gestureHandler = useMemo(() => onGestureEvent({
     state,
