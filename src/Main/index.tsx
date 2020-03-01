@@ -13,6 +13,8 @@ import Constants from 'expo-constants'
 import * as Permissions from 'expo-permissions'
 import Slider from "react-native-slider";
 import Token from '../Token'
+import * as FileSystem from 'expo-file-system';
+
 
 
 
@@ -20,7 +22,7 @@ const getPermissionAsync = async () => {
   if (Constants.platform.ios) {
     const { status } = await Permissions.askAsync(Permissions.CAMERA_ROLL);
     if (status !== 'granted') {
-      alert('Sorry, we need camera roll permissions to make this work!');
+      alert('We need camera roll permissions so you can select your token or map image');
     }
   }
 }
@@ -32,8 +34,6 @@ const pickToken = async () => {
     aspect: [1, 1],
     quality: 1
   });
-
-  console.log(result);
 
   if (!result.cancelled) {
     return result.uri
@@ -48,8 +48,6 @@ const pickMap = async () => {
     allowsEditing: false,
     quality: 1
   });
-
-  console.log(result);
 
   if (!result.cancelled) {
     return result.uri
@@ -76,7 +74,7 @@ function StatusBarPlaceHolder() {
 }
 
 function onMoveDefault() {
-  console.log("On Move called.")
+  console.log("My On Move called.")
 }
 
 class Main extends React.Component {
@@ -95,17 +93,18 @@ class Main extends React.Component {
   }
 
   fetchData () {
-    AsyncStorage.getItem('characters')
-      .then(charactersString => {
-        const characters = JSON.parse(charactersString)
-        if (characters) {
-          const newState = this.state
-          newState.characters = characters
-          this.setState(newState)
-        } else {
-          this.setState({ characters: [] })
-        }
-      })
+				fetch('https://kylona.com/rpgMap/rpgMapData')
+				.then((response) => response.json())
+				.then((characters) => {
+					if (characters) {
+						const newState = this.state
+						newState.characters = characters
+						this.setState(newState)
+					} else {
+						this.setState({ characters: [] })
+					}
+				})
+			
 
     AsyncStorage.getItem('mapImage')
       .then(mapImageString => {
@@ -118,11 +117,14 @@ class Main extends React.Component {
       })
   }
 
-	sendData() {
+  saveData () {
+    AsyncStorage.setItem('characters', JSON.stringify(this.state.characters))
+  }
 
+	sendData () {
     AsyncStorage.getItem('characters')
       .then(charactersString => {
-				fetch('https://kylona.com/cgi-bin/updateMap.pl', {
+				fetch('https://kylona.com/cgi-bin/updateRPGMap.pl', {
 					method: 'POST',
 					headers: {
 						Accept: 'application/json',
@@ -207,7 +209,12 @@ class Main extends React.Component {
 					key={character.name}
 					xPos={character.x}
 					yPos={character.y}
-          onMove={onMoveDefault}
+          onMove={(xPos, yPos) => {
+            character.x = xPos
+            character.y = yPos
+            this.saveData()
+            this.sendData()
+          } }
 					>
           <Image source={{ uri: character.image }} style={[styles.character]}/>
         </Token>
@@ -220,12 +227,6 @@ class Main extends React.Component {
 
 				<SafeAreaView style={{ flex: 1, paddingTop: STATUS_BAR_HEIGHT}}>
 					<View style={styles.header}>
-						<Button
-							onPress={async () => {
-								await this.sendData()
-							}}>
-							<Text>Push Map</Text>
-						</Button>
 						<Button
 							onPress={async () => {
 								await getPermissionAsync()
@@ -246,12 +247,10 @@ class Main extends React.Component {
 								if (image !== '') {
 									const characters = [...this.state.characters]
 									characters.push({
-										name: 'Test Player' + characters.length,
+										name: 'Token' + characters.length,
 										image,
 										x: 100,
 										y: 200,
-										color: 'blue',
-										onDock: 'true'
 									})
 									await AsyncStorage.setItem('characters', JSON.stringify(characters))
 								}

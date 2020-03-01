@@ -13,6 +13,7 @@
   "dependencies": {
     "@dudigital/react-native-zoomable-view": "^1.0.15",
     "expo": "~36.0.0",
+    "expo-file-system": "^8.0.0",
     "expo-image-picker": "~8.0.1",
     "patch-package": "^6.2.0",
     "react": "~16.9.0",

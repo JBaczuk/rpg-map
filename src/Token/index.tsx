@@ -1,81 +1,84 @@
-import React from 'react'
-import { StyleSheet, View, Dimensions } from 'react-native'
-import Animated from 'react-native-reanimated'
-import PropTypes from 'prop-types'
-import { useMemoOne as useMemo } from 'use-memo-one'
-import { PanGestureHandler, State } from 'react-native-gesture-handler'
-import { onGestureEvent, useValues } from 'react-native-redash'
+import React, { Component } from 'react';
+import { Animated, StyleSheet, View } from 'react-native';
 
-const { cond, and, not, set, add, eq } = Animated
+import {
+  PanGestureHandler,
+  ScrollView,
+  State,
+} from 'react-native-gesture-handler';
 
-const withDiff = (value, gestureState, offset, onMove) => {
-  return useMemo(() => cond(
-    eq(gestureState, State.END),
-    [
-      set(offset, add(offset, value)),
-    ],
-    add(offset, value)
-  ), [])
-}
+const USE_NATIVE_DRIVER = true
 
-function Token (props) {
-  const {
-    xPos,
-    yPos,
-    onMove
-  } = props
-
-  const [state,
-    translationX,
-    translationY,
-    offsetX,
-    offsetY,
-    velocityX,
-    velocityY,
-    snapX,
-    snapY,
-  ] = useValues([State.UNDETERMINED, 0, 0, 0, 0, 0, 0, 0, 0], [])
-
-  const gestureHandler = useMemo(() => onGestureEvent({
-    state,
-    translationX,
-    translationY,
-    velocityX,
-    velocityY
-  }), [])
-
-  const translateX = withDiff(translationX, state, offsetX, onMove)
-  const translateY = withDiff(translationY, state, offsetY, onMove)
-
-  return (
-    <PanGestureHandler
-      {...gestureHandler}
-      //onHandlerStateChange={onMove}
-    >
-      <Animated.View
-        style={{
-          transform: [
-            { translateX },
-            { translateY }
-          ]
-        }}
-      >
-        {props.children}
-      </Animated.View>
-    </PanGestureHandler>
-  )
-}
-
-Token.propTypes = {
-  xPos: PropTypes.number,
-  yPos: PropTypes.number,
-  onMove: PropTypes.func
+export default class Token extends Component {
+  constructor(props) {
+    super(props);
+    this._translateX = new Animated.Value(0);
+    this._translateY = new Animated.Value(0);
+    this._lastOffset = { x: props.xPos, y: props.yPos };
+		this._translateX.setOffset(this._lastOffset.x);
+		this._translateY.setOffset(this._lastOffset.y);
+    this._onGestureEvent = Animated.event(
+      [
+        {
+          nativeEvent: {
+            translationX: this._translateX,
+            translationY: this._translateY,
+          },
+        },
+      ],
+      { useNativeDriver: USE_NATIVE_DRIVER }
+    );
+		this._onMove = props.onMove
+  }
+  _onHandlerStateChange = event => {
+    if (event.nativeEvent.oldState === State.ACTIVE) {
+      this._lastOffset.x += event.nativeEvent.translationX;
+      this._lastOffset.y += event.nativeEvent.translationY;
+      this._translateX.setOffset(this._lastOffset.x);
+      this._translateX.setValue(0);
+      this._translateY.setOffset(this._lastOffset.y);
+      this._translateY.setValue(0);
+			this._onMove(this._lastOffset.x, this._lastOffset.y);
+    }
+  };
+  render() {
+    return (
+      <PanGestureHandler
+        {...this.props}
+        onGestureEvent={this._onGestureEvent}
+        onHandlerStateChange={this._onHandlerStateChange}>
+        <Animated.View
+          style={[
+            styles.box,
+            {
+              transform: [
+                { translateX: this._translateX },
+                { translateY: this._translateY },
+              ],
+            },
+            this.props.boxStyle,
+          ]}
+        >
+					{this.props.children}
+				</Animated.View>
+      </PanGestureHandler>
+    );
+  }
 }
 
 Token.defaultProps = {
-  xPos: 0,
-  xPos: 0,
-  onMove: () => { console.log("Defualt On Move Called") }
+	onMove: () => {console.log('Default On Move Called')}
 }
 
-export default Token
+
+const styles = StyleSheet.create({
+  scrollView: {
+    flex: 1,
+  },
+  box: {
+    alignSelf: 'center',
+    backgroundColor: 'plum',
+    margin: 10,
+    zIndex: 200,
+  },
+});
