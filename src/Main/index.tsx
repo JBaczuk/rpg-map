@@ -13,10 +13,7 @@ import Constants from 'expo-constants'
 import * as Permissions from 'expo-permissions'
 import Slider from "react-native-slider";
 import Token from '../Token'
-import * as FileSystem from 'expo-file-system';
-
-
-
+import Server from '../Server'
 
 const getPermissionAsync = async () => {
   if (Constants.platform.ios) {
@@ -73,40 +70,23 @@ function StatusBarPlaceHolder() {
     );
 }
 
-function onMoveDefault() {
-  console.log("My On Move called.")
-}
-
 class Main extends React.Component {
   constructor(props) {
     super(props)
-
     this.state = {
-      characters: [],
+      tokens: [],
       mapImage: props.mapUrl,
 			gridScale: 25
     }
   }
 
   componentDidMount () {
-    this.fetchData()
+    this.sync();
   }
-
-  fetchData () {
-				fetch('https://kylona.com/rpgMap/rpgMapData')
-				.then((response) => response.json())
-				.then((characters) => {
-					if (characters) {
-						const newState = this.state
-						newState.characters = characters
-						this.setState(newState)
-					} else {
-						this.setState({ characters: [] })
-					}
-				})
-			
-
-    AsyncStorage.getItem('mapImage')
+  
+  
+  sync() {
+    Server.load('TestGame', 'mapImage')
       .then(mapImageString => {
         const mapImage = JSON.parse(mapImageString)
         if (mapImage) {
@@ -114,32 +94,33 @@ class Main extends React.Component {
           newState.mapImage = mapImage
           this.setState(newState)
         }
-      })
+      });
+    Server.load('TestGame', 'tokens')
+      .then(tokenString => {
+        const tokens = JSON.parse(tokenString)
+        const newTokens = []
+        if (tokens) {
+          for (token1 in tokens) {
+            const unique = true
+            for (token2 in this.state.tokens) {
+              if (token1 == token2) unique = false;
+            }
+            if (unique) newTokens.append(token1);
+          }
+          this.state.tokens = tokens
+        }
+      });
+    Server.save("TestGame","TestItem",JSON.stringify("The Things")).then( () => {
+      Server.load("TestGame", "TestItem").then( (response) => { console.log(response) });
+    });
+    this.render()
   }
 
-  saveData () {
-    AsyncStorage.setItem('characters', JSON.stringify(this.state.characters))
-  }
 
-	sendData () {
-    AsyncStorage.getItem('characters')
-      .then(charactersString => {
-				fetch('https://kylona.com/cgi-bin/updateRPGMap.pl', {
-					method: 'POST',
-					headers: {
-						Accept: 'application/json',
-						'Content-Type': 'application/json',
-					},
-					body: charactersString
-				});
-      })
-	}
-
-
-  confirmDeleteAllPlayers = async () => {
+  async confirmDeleteAllPlayers() {
     return new Promise((resolve) => {
       const title = 'Are you sure you want to clear the map?'
-      const message = 'This will clear all tokens from the map.'
+      const message = 'This will delete all tokens from the map.'
       const buttons = [
         {
           text: 'Cancel',
@@ -168,7 +149,7 @@ class Main extends React.Component {
 				padding: StyleGuide.spacing,
 				backgroundColor: 'black'
 			},
-			character: {
+			token: {
 				flex: 0,
 				marginLeft:	-this.state.gridScale/2,
 				marginRight: -this.state.gridScale/2,
@@ -203,20 +184,21 @@ class Main extends React.Component {
 				position: 'absolute'
 			}
 		}
-    const characters = this.state.characters.map(character => {
+    const tokenViews = this.state.tokens.map(token => {
       return (
         <Token
-					key={character.name}
-					xPos={character.x}
-					yPos={character.y}
+					key={token.name}
+					xPos={0}
+					yPos={0}
           onMove={(xPos, yPos) => {
-            character.x = xPos
-            character.y = yPos
-            this.saveData()
-            this.sendData()
+            console.log("On Move Called")
+            token.x = xPos
+            token.y = yPos
+            token.timestamp = Date.now()
+            this.sync()
           } }
 					>
-          <Image source={{ uri: character.image }} style={[styles.character]}/>
+          <Image source={{ uri: token.image }} style={[styles.token]}/>
         </Token>
       )
     })
@@ -233,9 +215,10 @@ class Main extends React.Component {
 								const image = await pickMap()
 								if (image !== '') {
 									this.state.mapImage = image
-									await AsyncStorage.setItem('mapImage', JSON.stringify(image))
+									await Server.save('TestGame', 'mapImage', JSON.stringify(image)).then( () => {
+                    this.sync();
+                  });
 								}
-								await this.fetchData()
 							}}
 						>
 							<Text>Change Map</Text>
@@ -245,16 +228,18 @@ class Main extends React.Component {
 								await getPermissionAsync()
 								const image = await pickToken()
 								if (image !== '') {
-									const characters = [...this.state.characters]
-									characters.push({
-										name: 'Token' + characters.length,
+									const tokens = [...this.state.tokens]
+									tokens.push({
+										name: 'Token' + tokens.length,
 										image,
 										x: 100,
 										y: 200,
+                    timestamp: Date.now()
 									})
-									await AsyncStorage.setItem('characters', JSON.stringify(characters))
+									await Server.save('TestGame', 'tokens', JSON.stringify(tokens)).then( () => {
+                    this.sync()
+                  });
 								}
-								await this.fetchData()
 							}}
 						>
 							<Text>Add Token</Text>
@@ -263,8 +248,9 @@ class Main extends React.Component {
 							onPress={async () => {
 								const confirmed = await this.confirmDeleteAllPlayers()
 								if (confirmed) {
-									await AsyncStorage.removeItem('characters')
-									this.fetchData()
+									await Server.send('TestGame', 'tokens', "").then( () => {
+                    this.sync();
+                  });
 								}
 							}}
 						>
@@ -297,7 +283,7 @@ class Main extends React.Component {
 						style={styles.main}
 					>
 						<View style={styles.tokenDock}>
-							{characters}
+							{tokenViews}
 						</View>
 						<Image style={styles.image}
 							source={{ uri: this.state.mapImage }}
